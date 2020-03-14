@@ -1,0 +1,22 @@
+- name: ensure telegraf_config docker volume is existing
+  docker_volume:
+    name: telegraf_config
+
+- name: get file docker volume informations
+  docker_volume_info:
+    name: telegraf_config
+  register: result
+
+- name: copy telegraf configuration
+  copy:
+    src: "{{ telegraf_config_file }}"
+    dest: "{{ result.volume.Mountpoint }}/telegraf.conf"
+
+- name: (Re-)create telegraf container
+  docker_container:
+    name: telegraf
+    image: "telegraf:{{ telegraf_docker_image }}"
+    state: started
+    restart_policy: on-failure
+    volumes:
+      - "telegraf_config:/etc/telegraf/"
